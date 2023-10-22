@@ -1,0 +1,20 @@
+{
+  "name": "recipes-restapi-mysql",
+  "version": "1.0.0",
+  "description": "API for recipes site",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rodrigo CS",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "3.0.1"
+  },
+  "dependencies": {
+    "express": "4.18.2",
+    "mysql2": "3.6.2"
+  }
+}
