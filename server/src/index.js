@@ -1,4 +1,9 @@
 import express from "express";
+import cors from "cors";
+
+// multer for image handling
+import multer from "multer";
+
 import { index } from "./controllers/index.controller.js";
 import {
   deleteRecipe,
@@ -8,8 +13,16 @@ import {
   postRecipe
 } from "./controllers/recipes.controller.js";
 
+// express
 const app = express();
 app.use(express.json());
+
+// cors
+app.use(cors());
+
+// multer
+const upload = multer({ dest: "src/uploads"});
+
 const PORT = process.env.PORT || 3000;
 
 // MIDDLEWARE para habilitar CORS
@@ -28,7 +41,7 @@ app.get("/api/recipes", getRecipes);
 app.get("/api/recipes/:id", getRecipe);
 
 // POST
-app.post("/api/recipes", postRecipe);
+app.post("/api/recipes", upload.single("img"), postRecipe);
 
 // PATCH
 app.patch("/api/recipes/:id", patchRecipe);

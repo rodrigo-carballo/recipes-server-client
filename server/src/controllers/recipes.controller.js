@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import fs from "fs";
 
 export const getRecipes = async (req, res) => {
   try {
@@ -28,13 +29,30 @@ export const getRecipe = async (req, res) => {
 }
 
 export const postRecipe = async (req, res) => {
-  const { name, img, tags, prepTime, ingredients, prepProcess, notes } = req.body;
+  const { name, tags, prepTime, ingredients, prepProcess, notes, createdBy } = req.body;
 
-  try {
+  const creationDate = getCurrentDate();
+  const lastModifiedDate = creationDate;
+
+  const imgPreviousName = req.file.filename;
+  const imgNewFileName = getImgNewFileName(name, req);
+  const imgPreviousPath = `src/uploads/${imgPreviousName}`
+  const imgNewPath = `src/uploads/${imgNewFileName}`;
+
+  console.log({ imgPreviousPath });
+  console.log({ imgNewPath });
+
+  fs.rename(imgPreviousPath, imgNewPath, (err) => {
+    if (err) throw err;
+  }) 
+
+  try { 
     const [result] = await pool.query(`
-    INSERT INTO recipes (name, img, tags, prepTime, ingredients, prepProcess, notes) VALUES
-      (IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""))
-    `, [name, img, tags, prepTime, ingredients, prepProcess, notes]);
+    INSERT INTO recipes 
+    (name, tags, prepTime, ingredients, prepProcess, notes, createdBy, creationDate, lastModifiedDate, imgFileName) 
+    VALUES
+      (IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""))
+    `, [name, tags, prepTime, ingredients, prepProcess, notes, createdBy, creationDate, lastModifiedDate, imgNewFileName]);
   
     recipeCreated(res);
     
@@ -92,7 +110,7 @@ export const deleteRecipe = async (req, res) => {
   }
 }
 
-// MESSAGES FUNCTIONS
+// message functions
 const somethingWentWrong = (res, error) => {
   res.status(500).json({
     message: "Something went wrong",
@@ -118,4 +136,28 @@ const recipeDeleted = (res) => {
 
 const recipeToDeleteNotFound = (res) => {
   res.status(404).json({message: "Recipe to delete not found"});
+};
+
+// process functions
+const getCurrentDate = () => {
+  const dateObj = new Date();
+  const dateArray = dateObj.toString().split(" ");
+
+  const day = dateArray[2];
+  const month = dateArray[1];
+  const year = dateArray[3];
+  const timeArray = dateArray[4].split(":");
+  const time = timeArray[0] + ":" + timeArray[1];
+
+  const fullDate = `${day}/${month}/${year}-${time}`;
+
+  return fullDate;
+};
+
+const getImgNewFileName = (name, req) => {
+  const recipeName = name.split(" ").join("");
+  const imgOriginalExtension = req.file.originalname.split(".")[1];
+  const imgNewFileName = recipeName + "." + imgOriginalExtension;
+
+  return imgNewFileName;
 };
